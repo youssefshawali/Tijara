@@ -91,3 +91,62 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #1b8e4e80;
 }
+
+/* Admin dashboard theme */
+.admin-theme {
+  --background: 0 0% 98%;
+  --foreground: 0 0% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --primary: 152 67% 33%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 152 67% 33%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 152 67% 33%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+html.dark .admin-theme,
+html.dark body.admin-theme {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 10%;
+  --card-foreground: 0 0% 98%;
+  --primary: 152 67% 33%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 64%;
+  --accent: 152 67% 33%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 152 67% 33%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.admin-theme .admin-root {
+  min-height: 100vh;
+}
+
+.admin-theme input,
+.admin-theme textarea,
+.admin-theme [role="combobox"] {
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.admin-theme input::placeholder,
+.admin-theme textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+}

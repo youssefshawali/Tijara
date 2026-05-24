@@ -6,31 +6,20 @@ export interface ContactSubmissionResponse {
   id?: string;
 }
 
-/**
- * Submit contact form data.
- * Currently logs to console; replace with API call when backend is ready.
- *
- * Future: POST /api/contact
- */
 export async function submitContactForm(
   data: ContactFormData
 ): Promise<ContactSubmissionResponse> {
-  // Simulate network delay for realistic UX
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  const response = await fetch("/api/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("[TIJARA Contact Form Submission]", data);
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message ?? "Submission failed");
   }
 
-  // Future backend integration:
-  // return apiClient<ContactSubmissionResponse>('/api/contact', {
-  //   method: 'POST',
-  //   body: JSON.stringify(data),
-  // });
-
-  return {
-    success: true,
-    message:
-      "Thank you for reaching out. Our team will respond within one business day.",
-  };
+  return result;
 }
