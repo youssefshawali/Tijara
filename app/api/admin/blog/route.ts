@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server";
+import { desc, eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import BlogPost from "@/models/BlogPost";
+import { db } from "@/lib/db";
+import { blogPosts } from "@/lib/db/schema";
 import { blogPostSchema } from "@/lib/validations/admin";
 import { slugify } from "@/lib/slug";
+import { createId } from "@/lib/id";
+import { withMongoId, withMongoIds } from "@/lib/serialize";
 
 export async function GET() {
   const { error } = await requireAdminSession();
   if (error) return error;
 
   try {
-    await connectDB();
-    const posts = await BlogPost.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const posts = await db
+      .select()
+      .from(blogPosts)
+      .orderBy(desc(blogPosts.createdAt));
 
-    return NextResponse.json({ data: posts });
+    return NextResponse.json({ data: withMongoIds(posts) });
   } catch (err) {
     console.error("[API Admin Blog GET]", err);
     return NextResponse.json(
@@ -32,13 +35,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data = blogPostSchema.parse(body);
-
     const slug = data.slug || slugify(data.title);
-    const featuredImage = data.featuredImage || undefined;
 
-    await connectDB();
+    const [existing] = await db
+      .select({ id: blogPosts.id })
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, slug))
+      .limit(1);
 
-    const existing = await BlogPost.findOne({ slug });
     if (existing) {
       return NextResponse.json(
         { error: "A blog post with this slug already exists" },
@@ -46,14 +50,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const post = await BlogPost.create({
-      ...data,
-      slug,
-      featuredImage,
-      publishedAt: data.status === "published" ? new Date() : undefined,
-    });
+    const [post] = await db
+      .insert(blogPosts)
+      .values({
+        id: createId(),
+        title: data.title,
+        slug,
+        content: data.content,
+        excerpt: data.excerpt || null,
+        featuredImage: data.featuredImage || null,
+        category: data.category,
+        tags: data.tags,
+        seoTitle: data.seoTitle || null,
+        seoDescription: data.seoDescription || null,
+        status: data.status,
+        publishedAt: data.status === "published" ? new Date() : null,
+      })
+      .returning();
 
-    return NextResponse.json({ data: post }, { status: 201 });
+    return NextResponse.json({ data: withMongoId(post) }, { status: 201 });
   } catch (err) {
     console.error("[API Admin Blog POST]", err);
     return NextResponse.json(

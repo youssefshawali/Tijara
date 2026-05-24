@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import Testimonial from "@/models/Testimonial";
+import { db } from "@/lib/db";
+import { testimonials } from "@/lib/db/schema";
 import { testimonialSchema } from "@/lib/validations/admin";
+import { withMongoId } from "@/lib/serialize";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -12,17 +14,17 @@ export async function GET(_request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await connectDB();
+    const [row] = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.id, id))
+      .limit(1);
 
-    const testimonial = await Testimonial.findById(id).lean();
-    if (!testimonial) {
-      return NextResponse.json(
-        { error: "Testimonial not found" },
-        { status: 404 }
-      );
+    if (!row) {
+      return NextResponse.json({ error: "Testimonial not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: testimonial });
+    return NextResponse.json({ data: withMongoId(row) });
   } catch (err) {
     console.error("[API Admin Testimonial GET]", err);
     return NextResponse.json(
@@ -40,24 +42,28 @@ export async function PUT(request: Request, context: RouteContext) {
     const { id } = await context.params;
     const body = await request.json();
     const data = testimonialSchema.parse(body);
-    const imageUrl = data.imageUrl || undefined;
 
-    await connectDB();
+    const [row] = await db
+      .update(testimonials)
+      .set({
+        clientName: data.clientName,
+        position: data.position,
+        company: data.company,
+        quote: data.quote,
+        imageUrl: data.imageUrl || null,
+        rating: data.rating,
+        published: data.published,
+        sortOrder: data.sortOrder,
+        updatedAt: new Date(),
+      })
+      .where(eq(testimonials.id, id))
+      .returning();
 
-    const testimonial = await Testimonial.findByIdAndUpdate(
-      id,
-      { ...data, imageUrl },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!testimonial) {
-      return NextResponse.json(
-        { error: "Testimonial not found" },
-        { status: 404 }
-      );
+    if (!row) {
+      return NextResponse.json({ error: "Testimonial not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: testimonial });
+    return NextResponse.json({ data: withMongoId(row) });
   } catch (err) {
     console.error("[API Admin Testimonial PUT]", err);
     return NextResponse.json(
@@ -73,14 +79,13 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await connectDB();
+    const [row] = await db
+      .delete(testimonials)
+      .where(eq(testimonials.id, id))
+      .returning();
 
-    const testimonial = await Testimonial.findByIdAndDelete(id);
-    if (!testimonial) {
-      return NextResponse.json(
-        { error: "Testimonial not found" },
-        { status: 404 }
-      );
+    if (!row) {
+      return NextResponse.json({ error: "Testimonial not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });

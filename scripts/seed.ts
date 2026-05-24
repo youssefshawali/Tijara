@@ -1,28 +1,43 @@
 import bcrypt from "bcryptjs";
-import connectDB from "@/lib/mongodb";
-import AdminUser from "@/models/AdminUser";
-import Service from "@/models/Service";
-import BlogPost from "@/models/BlogPost";
-import Testimonial from "@/models/Testimonial";
-import SiteSettings from "@/models/SiteSettings";
-import ContactSubmission from "@/models/ContactSubmission";
+import { config } from "dotenv";
+import { join } from "path";
+import { eq, count } from "drizzle-orm";
+import { db } from "@/lib/db";
+import {
+  adminUsers,
+  services,
+  blogPosts,
+  testimonials,
+  siteSettings,
+  contactSubmissions,
+} from "@/lib/db/schema";
 import { services as staticServices } from "@/data/services";
+import { createId } from "@/lib/id";
+
+config({ path: join(process.cwd(), ".env.local") });
+
+const SETTINGS_ID = "default";
 
 async function seed() {
-  if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI is required");
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required");
   }
 
-  await connectDB();
-  console.log("Connected to MongoDB");
+  console.log("Connected to PostgreSQL");
 
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@tijara.dev";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "Admin@123456";
 
-  const existingAdmin = await AdminUser.findOne({ email: adminEmail });
+  const [existingAdmin] = await db
+    .select()
+    .from(adminUsers)
+    .where(eq(adminUsers.email, adminEmail))
+    .limit(1);
+
   if (!existingAdmin) {
     const hashed = await bcrypt.hash(adminPassword, 12);
-    await AdminUser.create({
+    await db.insert(adminUsers).values({
+      id: createId(),
       name: "TIJARA Admin",
       email: adminEmail,
       password: hashed,
@@ -33,9 +48,10 @@ async function seed() {
     console.log("Admin user already exists");
   }
 
-  const settingsCount = await SiteSettings.countDocuments();
-  if (settingsCount === 0) {
-    await SiteSettings.create({
+  const [settingsRow] = await db.select({ count: count() }).from(siteSettings);
+  if (settingsRow.count === 0) {
+    await db.insert(siteSettings).values({
+      id: SETTINGS_ID,
       companyName: "TIJARA",
       tagline: "Premium business growth partner for ambitious companies.",
       description:
@@ -56,10 +72,11 @@ async function seed() {
     console.log("Site settings seeded");
   }
 
-  const serviceCount = await Service.countDocuments();
-  if (serviceCount === 0) {
-    await Service.insertMany(
+  const [serviceRow] = await db.select({ count: count() }).from(services);
+  if (serviceRow.count === 0) {
+    await db.insert(services).values(
       staticServices.map((service, index) => ({
+        id: createId(),
         title: service.title,
         slug: service.id,
         shortDescription: service.shortDescription,
@@ -74,10 +91,11 @@ async function seed() {
     console.log(`Seeded ${staticServices.length} services`);
   }
 
-  const testimonialCount = await Testimonial.countDocuments();
-  if (testimonialCount === 0) {
-    await Testimonial.insertMany([
+  const [testimonialRow] = await db.select({ count: count() }).from(testimonials);
+  if (testimonialRow.count === 0) {
+    await db.insert(testimonials).values([
       {
+        id: createId(),
         clientName: "Sarah M.",
         position: "CEO",
         company: "Tech Startup",
@@ -88,6 +106,7 @@ async function seed() {
         sortOrder: 0,
       },
       {
+        id: createId(),
         clientName: "Ahmed K.",
         position: "Founder",
         company: "E-commerce Brand",
@@ -98,6 +117,7 @@ async function seed() {
         sortOrder: 1,
       },
       {
+        id: createId(),
         clientName: "Layla R.",
         position: "Director",
         company: "Professional Services",
@@ -111,9 +131,10 @@ async function seed() {
     console.log("Testimonials seeded");
   }
 
-  const blogCount = await BlogPost.countDocuments();
-  if (blogCount === 0) {
-    await BlogPost.create({
+  const [blogRow] = await db.select({ count: count() }).from(blogPosts);
+  if (blogRow.count === 0) {
+    await db.insert(blogPosts).values({
+      id: createId(),
       title: "How to Scale Your Business with Intentional Growth",
       slug: "intentional-growth-strategy",
       content:
@@ -122,26 +143,30 @@ async function seed() {
       category: "Strategy",
       tags: ["growth", "strategy", "scaling"],
       seoTitle: "Intentional Growth Strategy | TIJARA",
-      seoDescription: "Learn how intentional growth strategies help businesses scale sustainably.",
+      seoDescription:
+        "Learn how intentional growth strategies help businesses scale sustainably.",
       status: "published",
       publishedAt: new Date(),
     });
     console.log("Sample blog post seeded");
   }
 
-  const messageCount = await ContactSubmission.countDocuments();
-  if (messageCount === 0) {
-    await ContactSubmission.insertMany([
+  const [messageRow] = await db.select({ count: count() }).from(contactSubmissions);
+  if (messageRow.count === 0) {
+    await db.insert(contactSubmissions).values([
       {
+        id: createId(),
         name: "John Doe",
         email: "john@example.com",
         phone: "+201000000001",
         company: "Acme Corp",
         businessType: "SME",
-        message: "We are looking for help with our growth strategy for the MENA market.",
+        message:
+          "We are looking for help with our growth strategy for the MENA market.",
         read: false,
       },
       {
+        id: createId(),
         name: "Jane Smith",
         email: "jane@example.com",
         phone: "+201000000002",

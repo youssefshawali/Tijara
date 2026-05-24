@@ -1,4 +1,5 @@
 import { createMetadata } from "@/lib/metadata";
+import { getMergedSiteConfig } from "@/lib/services/public-content";
 import {
   ContactHeroSection,
   ContactFormSection,
@@ -13,11 +14,21 @@ export const metadata = createMetadata({
   image: "/pictures/cta-reception.jpeg",
 });
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const config = await getMergedSiteConfig();
+
   return (
     <>
       <ContactHeroSection />
-      <ContactFormSection />
+      <ContactFormSection
+        contactInfo={{
+          email: config.email,
+          phone: config.phone,
+          address: config.address,
+          whatsapp: config.whatsapp,
+          instagram: config.instagram,
+        }}
+      />
       <NewsletterPlaceholder />
     </>
   );

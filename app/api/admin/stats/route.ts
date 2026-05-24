@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import ContactSubmission from "@/models/ContactSubmission";
-import BlogPost from "@/models/BlogPost";
-import Service from "@/models/Service";
-import Testimonial from "@/models/Testimonial";
+import { db } from "@/lib/db";
+import {
+  contactSubmissions,
+  blogPosts,
+  services,
+  testimonials,
+} from "@/lib/db/schema";
+import { count, eq, gte } from "drizzle-orm";
 
 function getLast7Days(): { date: string; start: Date; end: Date }[] {
   const days: { date: string; start: Date; end: Date }[] = [];
@@ -33,26 +36,28 @@ export async function GET() {
   if (error) return error;
 
   try {
-    await connectDB();
+    const weekStart = getLast7Days()[0].start;
 
     const [
-      messagesCount,
-      blogCount,
-      servicesCount,
-      testimonialsCount,
-      unreadCount,
+      [{ messagesCount }],
+      [{ blogCount }],
+      [{ servicesCount }],
+      [{ testimonialsCount }],
+      [{ unreadCount }],
       recentSubmissions,
     ] = await Promise.all([
-      ContactSubmission.countDocuments(),
-      BlogPost.countDocuments(),
-      Service.countDocuments(),
-      Testimonial.countDocuments(),
-      ContactSubmission.countDocuments({ read: false }),
-      ContactSubmission.find({
-        createdAt: { $gte: getLast7Days()[0].start },
-      })
-        .select("createdAt")
-        .lean(),
+      db.select({ messagesCount: count() }).from(contactSubmissions),
+      db.select({ blogCount: count() }).from(blogPosts),
+      db.select({ servicesCount: count() }).from(services),
+      db.select({ testimonialsCount: count() }).from(testimonials),
+      db
+        .select({ unreadCount: count() })
+        .from(contactSubmissions)
+        .where(eq(contactSubmissions.read, false)),
+      db
+        .select({ createdAt: contactSubmissions.createdAt })
+        .from(contactSubmissions)
+        .where(gte(contactSubmissions.createdAt, weekStart)),
     ]);
 
     const days = getLast7Days();

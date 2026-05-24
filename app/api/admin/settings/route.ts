@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import SiteSettings from "@/models/SiteSettings";
+import { db } from "@/lib/db";
+import { siteSettings } from "@/lib/db/schema";
 import { siteSettingsSchema } from "@/lib/validations/admin";
 import { siteConfig } from "@/lib/site-config";
+import { withMongoId } from "@/lib/serialize";
+
+const SETTINGS_ID = "default";
 
 function getDefaultSettings() {
   return {
+    id: SETTINGS_ID,
     companyName: siteConfig.name,
     tagline: siteConfig.tagline,
     description: siteConfig.description,
@@ -24,15 +29,20 @@ export async function GET() {
   if (error) return error;
 
   try {
-    await connectDB();
-
-    let settings = await SiteSettings.findOne();
+    let [settings] = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.id, SETTINGS_ID))
+      .limit(1);
 
     if (!settings) {
-      settings = await SiteSettings.create(getDefaultSettings());
+      [settings] = await db
+        .insert(siteSettings)
+        .values(getDefaultSettings())
+        .returning();
     }
 
-    return NextResponse.json({ data: settings.toObject() });
+    return NextResponse.json({ data: withMongoId(settings) });
   } catch (err) {
     console.error("[API Admin Settings GET]", err);
     return NextResponse.json(
@@ -49,24 +59,47 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const data = siteSettingsSchema.parse(body);
-    const logoUrl = data.logoUrl || undefined;
 
-    await connectDB();
-
-    let settings = await SiteSettings.findOne();
+    let [settings] = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.id, SETTINGS_ID))
+      .limit(1);
 
     if (!settings) {
-      settings = await SiteSettings.create({
-        ...getDefaultSettings(),
-        ...data,
-        logoUrl,
-      });
+      [settings] = await db
+        .insert(siteSettings)
+        .values({
+          ...getDefaultSettings(),
+          ...data,
+          logoUrl: data.logoUrl || null,
+        })
+        .returning();
     } else {
-      Object.assign(settings, { ...data, logoUrl });
-      await settings.save();
+      [settings] = await db
+        .update(siteSettings)
+        .set({
+          companyName: data.companyName,
+          tagline: data.tagline,
+          description: data.description,
+          email: data.email,
+          phone: data.phone,
+          whatsapp: data.whatsapp,
+          instagram: data.instagram,
+          instagramHandle: data.instagramHandle,
+          address: data.address,
+          logoUrl: data.logoUrl || null,
+          seoTitle: data.seoTitle || null,
+          seoDescription: data.seoDescription || null,
+          homepageHeroTitle: data.homepageHeroTitle || null,
+          homepageHeroSubtitle: data.homepageHeroSubtitle || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(siteSettings.id, SETTINGS_ID))
+        .returning();
     }
 
-    return NextResponse.json({ data: settings.toObject() });
+    return NextResponse.json({ data: withMongoId(settings) });
   } catch (err) {
     console.error("[API Admin Settings PUT]", err);
     return NextResponse.json(

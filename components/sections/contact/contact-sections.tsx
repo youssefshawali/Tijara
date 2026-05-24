@@ -10,7 +10,7 @@ import { fadeUp, slideInLeft, slideInRight, defaultViewport } from "@/lib/animat
 import { contactFormSchema, type ContactFormValues } from "@/lib/validations/contact";
 import { submitContactForm } from "@/lib/services/contact.service";
 import { businessTypes } from "@/data/content";
-import { siteConfig } from "@/lib/site-config";
+import type { PublicContactInfo } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +56,7 @@ export function ContactHeroSection() {
   );
 }
 
-export function ContactFormSection() {
+export function ContactFormSection({ contactInfo }: { contactInfo: PublicContactInfo }) {
   const [submitStatus, setSubmitStatus] = useState<{
     type: "success" | "error";
     message: string;
@@ -114,7 +114,7 @@ export function ContactFormSection() {
               <ul className="space-y-5">
                 <li>
                   <a
-                    href={`mailto:${siteConfig.email}`}
+                    href={`mailto:${contactInfo.email}`}
                     className="flex items-center gap-4 text-tijara-gray hover:text-tijara-green-light transition-colors group"
                   >
                     <div className="w-10 h-10 rounded-lg bg-tijara-green/10 flex items-center justify-center group-hover:bg-tijara-green/20 transition-colors">
@@ -124,13 +124,13 @@ export function ContactFormSection() {
                       <span className="block text-xs text-tijara-gray uppercase tracking-wider">
                         Email
                       </span>
-                      <span className="text-sm text-white">{siteConfig.email}</span>
+                      <span className="text-sm text-white">{contactInfo.email}</span>
                     </div>
                   </a>
                 </li>
                 <li>
                   <a
-                    href={`tel:${siteConfig.phone.replace(/\s/g, "")}`}
+                    href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
                     className="flex items-center gap-4 text-tijara-gray hover:text-tijara-green-light transition-colors group"
                   >
                     <motion.div className="w-10 h-10 rounded-lg bg-tijara-green/10 flex items-center justify-center group-hover:bg-tijara-green/20 transition-colors">
@@ -140,7 +140,7 @@ export function ContactFormSection() {
                       <span className="block text-xs text-tijara-gray uppercase tracking-wider">
                         Phone
                       </span>
-                      <span className="text-sm text-white">{siteConfig.phone}</span>
+                      <span className="text-sm text-white">{contactInfo.phone}</span>
                     </div>
                   </a>
                 </li>
@@ -152,7 +152,7 @@ export function ContactFormSection() {
                     <span className="block text-xs text-tijara-gray uppercase tracking-wider">
                       Location
                     </span>
-                    <span className="text-sm text-white">{siteConfig.address}</span>
+                    <span className="text-sm text-white">{contactInfo.address}</span>
                   </div>
                 </li>
               </ul>
@@ -160,7 +160,7 @@ export function ContactFormSection() {
 
             <div className="flex gap-4">
               <a
-                href={siteConfig.whatsapp}
+                href={contactInfo.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors text-sm font-medium"
@@ -169,7 +169,7 @@ export function ContactFormSection() {
                 WhatsApp
               </a>
               <a
-                href={siteConfig.instagram}
+                href={contactInfo.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-colors text-sm font-medium"
@@ -187,7 +187,7 @@ export function ContactFormSection() {
                     Google Maps integration
                   </p>
                   <p className="text-xs text-tijara-gray mt-1">
-                    {siteConfig.address}
+                    {contactInfo.address}
                   </p>
                 </div>
               </div>

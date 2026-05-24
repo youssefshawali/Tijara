@@ -2,9 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Mail, Phone, MapPin } from "lucide-react";
 import { footerLinks } from "@/data/navigation";
-import { siteConfig } from "@/lib/site-config";
+import type { SiteConfig } from "@/lib/site-config";
 
-export function Footer() {
+type FooterProps = {
+  config: SiteConfig;
+};
+
+export function Footer({ config }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -15,24 +19,24 @@ export function Footer() {
             <Link href="/" className="inline-block mb-6">
               <Image
                 src="/pictures/logo.jpeg"
-                alt="TIJARA"
+                alt={config.name}
                 width={140}
                 height={48}
                 className="h-10 w-auto"
               />
             </Link>
             <p className="text-sm text-tijara-gray leading-relaxed max-w-xs">
-              {siteConfig.tagline}
+              {config.tagline}
             </p>
             <a
-              href={siteConfig.instagram}
+              href={config.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 mt-6 text-sm text-tijara-gray hover:text-tijara-green-light transition-colors"
-              aria-label="Follow TIJARA on Instagram"
+              aria-label={`Follow ${config.name} on Instagram`}
             >
               <Instagram className="w-5 h-5" />
-              {siteConfig.instagramHandle}
+              {config.instagramHandle}
             </a>
           </div>
 
@@ -79,25 +83,25 @@ export function Footer() {
             <ul className="space-y-4">
               <li>
                 <a
-                  href={`mailto:${siteConfig.email}`}
+                  href={`mailto:${config.email}`}
                   className="flex items-start gap-3 text-sm text-tijara-gray hover:text-tijara-green-light transition-colors"
                 >
                   <Mail className="w-4 h-4 mt-0.5 shrink-0" />
-                  {siteConfig.email}
+                  {config.email}
                 </a>
               </li>
               <li>
                 <a
-                  href={`tel:${siteConfig.phone.replace(/\s/g, "")}`}
+                  href={`tel:${config.phone.replace(/\s/g, "")}`}
                   className="flex items-start gap-3 text-sm text-tijara-gray hover:text-tijara-green-light transition-colors"
                 >
                   <Phone className="w-4 h-4 mt-0.5 shrink-0" />
-                  {siteConfig.phone}
+                  {config.phone}
                 </a>
               </li>
               <li className="flex items-start gap-3 text-sm text-tijara-gray">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                {siteConfig.address}
+                {config.address}
               </li>
             </ul>
           </div>
@@ -105,14 +109,14 @@ export function Footer() {
 
         <div className="mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-tijara-gray">
-            © {year} TIJARA. All rights reserved.
+            © {year} {config.name}. All rights reserved.
           </p>
           <p className="text-xs text-tijara-gray">
             <a
-              href={siteConfig.url}
+              href={config.url}
               className="hover:text-tijara-green-light transition-colors"
             >
-              {siteConfig.domain}
+              {config.domain}
             </a>
           </p>
         </div>

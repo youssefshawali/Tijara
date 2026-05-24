@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import ContactSubmission from "@/models/ContactSubmission";
+import { db } from "@/lib/db";
+import { contactSubmissions } from "@/lib/db/schema";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
+import { withMongoIds } from "@/lib/serialize";
 
 export async function GET(request: Request) {
   const { error } = await requireAdminSession();
@@ -17,37 +19,36 @@ export async function GET(request: Request) {
     const search = searchParams.get("search")?.trim() ?? "";
     const status = searchParams.get("status") ?? "all";
 
-    const filter: Record<string, unknown> = {};
-
-    if (status === "read") {
-      filter.read = true;
-    } else if (status === "unread") {
-      filter.read = false;
-    }
-
+    const conditions = [];
+    if (status === "read") conditions.push(eq(contactSubmissions.read, true));
+    if (status === "unread") conditions.push(eq(contactSubmissions.read, false));
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { message: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
-      ];
+      conditions.push(
+        or(
+          ilike(contactSubmissions.name, `%${search}%`),
+          ilike(contactSubmissions.email, `%${search}%`),
+          ilike(contactSubmissions.message, `%${search}%`),
+          ilike(contactSubmissions.company, `%${search}%`)
+        )
+      );
     }
 
-    await connectDB();
-
+    const where = conditions.length ? and(...conditions) : undefined;
     const skip = (page - 1) * limit;
-    const [messages, total] = await Promise.all([
-      ContactSubmission.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
+
+    const [messages, [{ total }]] = await Promise.all([
+      db
+        .select()
+        .from(contactSubmissions)
+        .where(where)
+        .orderBy(desc(contactSubmissions.createdAt))
         .limit(limit)
-        .lean(),
-      ContactSubmission.countDocuments(filter),
+        .offset(skip),
+      db.select({ total: count() }).from(contactSubmissions).where(where),
     ]);
 
     return NextResponse.json({
-      data: messages,
+      data: withMongoIds(messages),
       pagination: {
         page,
         limit,

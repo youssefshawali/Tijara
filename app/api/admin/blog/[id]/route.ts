@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { and, eq, ne } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import BlogPost from "@/models/BlogPost";
+import { db } from "@/lib/db";
+import { blogPosts } from "@/lib/db/schema";
 import { blogPostSchema } from "@/lib/validations/admin";
 import { slugify } from "@/lib/slug";
+import { withMongoId } from "@/lib/serialize";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -13,14 +15,17 @@ export async function GET(_request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await connectDB();
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id))
+      .limit(1);
 
-    const post = await BlogPost.findById(id).lean();
     if (!post) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: post });
+    return NextResponse.json({ data: withMongoId(post) });
   } catch (err) {
     console.error("[API Admin Blog GET]", err);
     return NextResponse.json(
@@ -38,13 +43,14 @@ export async function PUT(request: Request, context: RouteContext) {
     const { id } = await context.params;
     const body = await request.json();
     const data = blogPostSchema.parse(body);
-
     const slug = data.slug || slugify(data.title);
-    const featuredImage = data.featuredImage || undefined;
 
-    await connectDB();
+    const [duplicate] = await db
+      .select({ id: blogPosts.id })
+      .from(blogPosts)
+      .where(and(eq(blogPosts.slug, slug), ne(blogPosts.id, id)))
+      .limit(1);
 
-    const duplicate = await BlogPost.findOne({ slug, _id: { $ne: id } });
     if (duplicate) {
       return NextResponse.json(
         { error: "A blog post with this slug already exists" },
@@ -52,27 +58,41 @@ export async function PUT(request: Request, context: RouteContext) {
       );
     }
 
-    const existing = await BlogPost.findById(id).lean();
+    const [existing] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id))
+      .limit(1);
+
     if (!existing) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
 
-    const update: Record<string, unknown> = {
-      ...data,
-      slug,
-      featuredImage,
-    };
+    const publishedAt =
+      data.status === "published" && !existing.publishedAt
+        ? new Date()
+        : existing.publishedAt;
 
-    if (data.status === "published" && !existing.publishedAt) {
-      update.publishedAt = new Date();
-    }
+    const [post] = await db
+      .update(blogPosts)
+      .set({
+        title: data.title,
+        slug,
+        content: data.content,
+        excerpt: data.excerpt || null,
+        featuredImage: data.featuredImage || null,
+        category: data.category,
+        tags: data.tags,
+        seoTitle: data.seoTitle || null,
+        seoDescription: data.seoDescription || null,
+        status: data.status,
+        publishedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(blogPosts.id, id))
+      .returning();
 
-    const post = await BlogPost.findByIdAndUpdate(id, update, {
-      new: true,
-      runValidators: true,
-    }).lean();
-
-    return NextResponse.json({ data: post });
+    return NextResponse.json({ data: withMongoId(post) });
   } catch (err) {
     console.error("[API Admin Blog PUT]", err);
     return NextResponse.json(
@@ -88,9 +108,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await connectDB();
+    const [post] = await db
+      .delete(blogPosts)
+      .where(eq(blogPosts.id, id))
+      .returning();
 
-    const post = await BlogPost.findByIdAndDelete(id);
     if (!post) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }

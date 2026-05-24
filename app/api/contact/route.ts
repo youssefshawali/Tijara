@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { contactFormSchema } from "@/lib/validations/contact";
 import { rateLimit } from "@/lib/rate-limit";
-import connectDB from "@/lib/mongodb";
-import ContactSubmission from "@/models/ContactSubmission";
+import { db } from "@/lib/db";
+import { contactSubmissions } from "@/lib/db/schema";
+import { createId } from "@/lib/id";
+import { sendContactNotification } from "@/lib/notifications/contact";
 
-/**
- * POST /api/contact
- * Validates, rate-limits, and persists contact form submissions.
- */
 export async function POST(request: Request) {
   try {
     const ip =
@@ -26,22 +24,32 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = contactFormSchema.parse(body);
 
-    await connectDB();
-    const submission = await ContactSubmission.create({
+    const id = createId();
+    await db.insert(contactSubmissions).values({
+      id,
       name: data.name,
       email: data.email,
       phone: data.phone,
-      company: data.company || undefined,
+      company: data.company || null,
       businessType: data.businessType,
       message: data.message,
       read: false,
     });
 
+    try {
+      await sendContactNotification({
+        ...data,
+        company: data.company ?? "",
+      });
+    } catch (emailErr) {
+      console.error("[API Contact] Email notification failed:", emailErr);
+    }
+
     return NextResponse.json({
       success: true,
       message:
         "Thank you for reaching out. Our team will respond within one business day.",
-      id: submission._id.toString(),
+      id,
     });
   } catch (error) {
     if (process.env.NODE_ENV === "development") {

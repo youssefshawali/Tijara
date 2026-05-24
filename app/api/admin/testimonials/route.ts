@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
+import { asc, desc } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import Testimonial from "@/models/Testimonial";
+import { db } from "@/lib/db";
+import { testimonials } from "@/lib/db/schema";
 import { testimonialSchema } from "@/lib/validations/admin";
+import { createId } from "@/lib/id";
+import { withMongoId, withMongoIds } from "@/lib/serialize";
 
 export async function GET() {
   const { error } = await requireAdminSession();
   if (error) return error;
 
   try {
-    await connectDB();
-    const testimonials = await Testimonial.find()
-      .sort({ sortOrder: 1, createdAt: -1 })
-      .lean();
+    const rows = await db
+      .select()
+      .from(testimonials)
+      .orderBy(asc(testimonials.sortOrder), desc(testimonials.createdAt));
 
-    return NextResponse.json({ data: testimonials });
+    return NextResponse.json({ data: withMongoIds(rows) });
   } catch (err) {
     console.error("[API Admin Testimonials GET]", err);
     return NextResponse.json(
@@ -31,16 +34,23 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data = testimonialSchema.parse(body);
-    const imageUrl = data.imageUrl || undefined;
 
-    await connectDB();
+    const [testimonial] = await db
+      .insert(testimonials)
+      .values({
+        id: createId(),
+        clientName: data.clientName,
+        position: data.position,
+        company: data.company,
+        quote: data.quote,
+        imageUrl: data.imageUrl || null,
+        rating: data.rating,
+        published: data.published,
+        sortOrder: data.sortOrder,
+      })
+      .returning();
 
-    const testimonial = await Testimonial.create({
-      ...data,
-      imageUrl,
-    });
-
-    return NextResponse.json({ data: testimonial }, { status: 201 });
+    return NextResponse.json({ data: withMongoId(testimonial) }, { status: 201 });
   } catch (err) {
     console.error("[API Admin Testimonials POST]", err);
     return NextResponse.json(

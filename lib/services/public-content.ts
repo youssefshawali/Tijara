@@ -1,18 +1,22 @@
-import connectDB from "@/lib/mongodb";
-import Service from "@/models/Service";
-import Testimonial from "@/models/Testimonial";
-import SiteSettings from "@/models/SiteSettings";
+import { eq, asc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { services, testimonials, siteSettings } from "@/lib/db/schema";
 import { services as staticServices } from "@/data/services";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig, type SiteConfig } from "@/lib/site-config";
+
+const SETTINGS_ID = "default";
 
 export async function getPublishedServices() {
   try {
-    await connectDB();
-    const services = await Service.find({ published: true })
-      .sort({ sortOrder: 1 })
-      .lean();
-    if (services.length === 0) return staticServices;
-    return services.map((s) => ({
+    const rows = await db
+      .select()
+      .from(services)
+      .where(eq(services.published, true))
+      .orderBy(asc(services.sortOrder));
+
+    if (rows.length === 0) return staticServices;
+
+    return rows.map((s) => ({
       id: s.slug,
       title: s.title,
       shortDescription: s.shortDescription,
@@ -20,7 +24,7 @@ export async function getPublishedServices() {
       benefits: s.benefits,
       process: s.process,
       icon: s.icon,
-      imageUrl: s.imageUrl,
+      imageUrl: s.imageUrl ?? undefined,
     }));
   } catch {
     return staticServices;
@@ -29,11 +33,14 @@ export async function getPublishedServices() {
 
 export async function getPublishedTestimonials() {
   try {
-    await connectDB();
-    const items = await Testimonial.find({ published: true })
-      .sort({ sortOrder: 1 })
-      .lean();
+    const items = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.published, true))
+      .orderBy(asc(testimonials.sortOrder));
+
     if (items.length === 0) return null;
+
     return items.map((t) => ({
       quote: t.quote,
       author: t.clientName,
@@ -48,8 +55,11 @@ export async function getPublishedTestimonials() {
 
 export async function getPublicSiteSettings() {
   try {
-    await connectDB();
-    const settings = await SiteSettings.findOne().lean();
+    const [settings] = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.id, SETTINGS_ID))
+      .limit(1);
     if (!settings) return null;
     return {
       tagline: settings.tagline,
@@ -68,9 +78,9 @@ export async function getPublicSiteSettings() {
   }
 }
 
-export async function getMergedSiteConfig() {
+export async function getMergedSiteConfig(): Promise<SiteConfig> {
   const settings = await getPublicSiteSettings();
-  if (!settings) return siteConfig;
+  if (!settings) return { ...siteConfig };
   return {
     ...siteConfig,
     name: settings.companyName ?? siteConfig.name,

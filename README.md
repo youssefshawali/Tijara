@@ -14,10 +14,10 @@ Premium business development website for [tijara.dev](https://tijara.dev) with a
 
 ### Admin Dashboard
 - **NextAuth** (credentials authentication)
-- **MongoDB + Mongoose**
+- **PostgreSQL** (via pgAdmin 4)
+- **Drizzle ORM**
 - **Cloudinary** (image uploads)
 - **Recharts** (analytics)
-- **Sonner** (toast notifications)
 
 ## Getting Started
 
@@ -27,86 +27,76 @@ Premium business development website for [tijara.dev](https://tijara.dev) with a
 npm install
 ```
 
-### 2. Configure environment
+### 2. Set up PostgreSQL in pgAdmin 4
 
-Copy `.env.example` to `.env.local` and fill in:
+1. Open **pgAdmin 4**
+2. Create a database named `tijara` (right-click **Databases → Create → Database**)
+3. Open **Query Tool** on the new database
+4. Paste and run the contents of [`sql/schema.sql`](sql/schema.sql)
+
+   Or from the terminal (after configuring `.env.local`):
+
+   ```bash
+   npm run db:push
+   ```
+
+### 3. Configure environment
+
+Copy `.env.example` to `.env.local` and update:
 
 | Variable | Description |
 |----------|-------------|
-| `MONGODB_URI` | MongoDB connection string |
-| `AUTH_SECRET` | Random secret for sessions (`openssl rand -base64 32`) |
-| `AUTH_URL` | App URL (`http://localhost:3000` in dev) |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Initial admin credentials for seeding |
-| `CLOUDINARY_*` | Cloudinary credentials for media uploads |
+| `DATABASE_URL` | `postgresql://postgres:YOUR_PASSWORD@localhost:5432/tijara` |
+| `AUTH_SECRET` | Random secret (`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`) |
+| `AUTH_URL` | `http://localhost:3000` in dev |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Initial admin login (used by seed) |
+| `CLOUDINARY_*` | Optional — for media uploads |
 
-### 3. Seed the database
+### 4. Seed the database
 
 ```bash
 npm run seed
 ```
 
-This creates the admin user, sample services, testimonials, blog post, and contact submissions.
-
-### 4. Run the dev server
+### 5. Run the dev server
 
 ```bash
 npm run dev
 ```
 
-- **Website:** [http://localhost:3000](http://localhost:3000)
-- **Admin:** [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
+- **Website:** http://localhost:3000
+- **Admin:** http://localhost:3000/admin/login
 
 ## Admin Dashboard
 
-The client can manage everything without coding:
-
 | Section | Features |
 |---------|----------|
-| **Dashboard** | Stats, activity chart, recent messages, quick actions |
-| **Services** | Add, edit, delete services with images |
-| **Blog Posts** | Create/edit posts, draft/publish, SEO fields |
-| **Testimonials** | Manage client quotes and ratings |
-| **Messages** | View contact form submissions, mark read/unread, search |
-| **Media Library** | Upload images via Cloudinary, copy URLs |
-| **Settings** | Company info, contact details, social links, SEO, logo |
+| **Dashboard** | Stats, activity chart, recent messages |
+| **Services** | Add, edit, delete services |
+| **Blog Posts** | Draft/publish, SEO fields |
+| **Testimonials** | Client quotes and ratings |
+| **Messages** | Contact form submissions |
+| **Media Library** | Cloudinary image uploads |
+| **Settings** | Company info, contact, social links |
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run db:push` | Apply SQL schema to PostgreSQL |
+| `npm run seed` | Create admin user + sample data |
 
 ## Project Structure
 
 ```
-/app
-  /(website)        → Public marketing pages
-  /admin            → Admin dashboard (protected)
-  /api              → API routes (contact, admin CRUD)
-/components
-  /admin            → Dashboard UI components
-  /layout           → Public site layout
-  /sections         → Page sections
-  /ui               → Shadcn UI components
-/models             → MongoDB/Mongoose schemas
-/lib                → Utilities, auth, validations
-/scripts            → Database seed script
+/app              → Website + admin + API routes
+/lib/db           → Drizzle schema + PostgreSQL connection
+/sql/schema.sql   → Tables to run in pgAdmin
+/models           → (removed — use lib/db/schema.ts)
+/scripts          → Seed + schema push
 ```
-
-## Public Pages
-
-- `/` — Home
-- `/about` — About
-- `/services` — Services
-- `/contact` — Contact form (saves to MongoDB)
 
 ## Deployment
 
-```bash
-npm run build
-npm start
-```
-
-Set all environment variables in your hosting provider (Vercel, etc.). Point `tijara.dev` to your host.
-
-## Security
-
-- Admin routes protected by NextAuth middleware
-- Passwords hashed with bcrypt
-- API routes require authenticated session
-- Contact form rate limiting (5 requests/minute per IP)
-- Zod validation on all inputs
+Set `DATABASE_URL`, `AUTH_SECRET`, and other env vars on your host, run `npm run db:push`, then `npm run seed` once.

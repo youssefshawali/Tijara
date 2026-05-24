@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import ContactSubmission from "@/models/ContactSubmission";
+import { db } from "@/lib/db";
+import { contactSubmissions } from "@/lib/db/schema";
+import { withMongoId } from "@/lib/serialize";
 
 const patchSchema = z.object({
   read: z.boolean(),
@@ -16,14 +18,17 @@ export async function GET(_request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await connectDB();
+    const [message] = await db
+      .select()
+      .from(contactSubmissions)
+      .where(eq(contactSubmissions.id, id))
+      .limit(1);
 
-    const message = await ContactSubmission.findById(id).lean();
     if (!message) {
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: message });
+    return NextResponse.json({ data: withMongoId(message) });
   } catch (err) {
     console.error("[API Admin Message GET]", err);
     return NextResponse.json(
@@ -42,19 +47,17 @@ export async function PATCH(request: Request, context: RouteContext) {
     const body = await request.json();
     const data = patchSchema.parse(body);
 
-    await connectDB();
-
-    const message = await ContactSubmission.findByIdAndUpdate(
-      id,
-      { read: data.read },
-      { new: true }
-    ).lean();
+    const [message] = await db
+      .update(contactSubmissions)
+      .set({ read: data.read, updatedAt: new Date() })
+      .where(eq(contactSubmissions.id, id))
+      .returning();
 
     if (!message) {
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: message });
+    return NextResponse.json({ data: withMongoId(message) });
   } catch (err) {
     console.error("[API Admin Message PATCH]", err);
     return NextResponse.json(
@@ -70,9 +73,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    await connectDB();
+    const [message] = await db
+      .delete(contactSubmissions)
+      .where(eq(contactSubmissions.id, id))
+      .returning();
 
-    const message = await ContactSubmission.findByIdAndDelete(id);
     if (!message) {
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }

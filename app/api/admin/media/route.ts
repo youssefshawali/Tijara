@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
+import { desc, eq } from "drizzle-orm";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import MediaFile from "@/models/MediaFile";
+import { db } from "@/lib/db";
+import { mediaFiles } from "@/lib/db/schema";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
+import { withMongoIds } from "@/lib/serialize";
 
 export async function GET() {
   const { error } = await requireAdminSession();
   if (error) return error;
 
   try {
-    await connectDB();
-    const files = await MediaFile.find().sort({ createdAt: -1 }).lean();
+    const files = await db
+      .select()
+      .from(mediaFiles)
+      .orderBy(desc(mediaFiles.createdAt));
 
-    return NextResponse.json({ data: files });
+    return NextResponse.json({ data: withMongoIds(files) });
   } catch (err) {
     console.error("[API Admin Media GET]", err);
     return NextResponse.json(
@@ -37,9 +41,12 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await connectDB();
+    const [file] = await db
+      .select()
+      .from(mediaFiles)
+      .where(eq(mediaFiles.id, id))
+      .limit(1);
 
-    const file = await MediaFile.findById(id);
     if (!file) {
       return NextResponse.json(
         { error: "Media file not found" },
@@ -53,7 +60,7 @@ export async function DELETE(request: Request) {
       console.error("[API Admin Media DELETE Cloudinary]", cloudinaryErr);
     }
 
-    await MediaFile.findByIdAndDelete(id);
+    await db.delete(mediaFiles).where(eq(mediaFiles.id, id));
 
     return NextResponse.json({ success: true });
   } catch (err) {

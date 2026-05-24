@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin-auth";
-import connectDB from "@/lib/mongodb";
-import MediaFile from "@/models/MediaFile";
+import { db } from "@/lib/db";
+import { mediaFiles } from "@/lib/db/schema";
 import {
   uploadToCloudinary,
   isCloudinaryConfigured,
 } from "@/lib/cloudinary";
+import { createId } from "@/lib/id";
+import { withMongoId } from "@/lib/serialize";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = [
   "image/jpeg",
   "image/png",
@@ -54,23 +56,24 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const folder = (formData.get("folder") as string) || "tijara";
-
     const upload = await uploadToCloudinary(buffer, folder);
 
-    await connectDB();
+    const [mediaFile] = await db
+      .insert(mediaFiles)
+      .values({
+        id: createId(),
+        filename: file.name,
+        url: upload.url,
+        publicId: upload.publicId,
+        format: upload.format,
+        bytes: upload.bytes,
+        width: upload.width ?? null,
+        height: upload.height ?? null,
+        folder,
+      })
+      .returning();
 
-    const mediaFile = await MediaFile.create({
-      filename: file.name,
-      url: upload.url,
-      publicId: upload.publicId,
-      format: upload.format,
-      bytes: upload.bytes,
-      width: upload.width,
-      height: upload.height,
-      folder,
-    });
-
-    return NextResponse.json({ data: mediaFile }, { status: 201 });
+    return NextResponse.json({ data: withMongoId(mediaFile) }, { status: 201 });
   } catch (err) {
     console.error("[API Admin Media Upload]", err);
     return NextResponse.json(

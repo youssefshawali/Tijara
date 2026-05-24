@@ -2,9 +2,10 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { authConfig } from "@/auth.config";
-import connectDB from "@/lib/mongodb";
-import AdminUser from "@/models/AdminUser";
+import { db } from "@/lib/db";
+import { adminUsers } from "@/lib/db/schema";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -24,10 +25,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        await connectDB();
-        const user = await AdminUser.findOne({
-          email: parsed.data.email.toLowerCase(),
-        }).lean();
+        const [user] = await db
+          .select()
+          .from(adminUsers)
+          .where(eq(adminUsers.email, parsed.data.email.toLowerCase()))
+          .limit(1);
 
         if (!user) return null;
 
@@ -35,7 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!valid) return null;
 
         return {
-          id: user._id.toString(),
+          id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
