@@ -6,6 +6,7 @@ export interface Service {
   benefits: string[];
   process: string[];
   icon: string;
+  imageUrl?: string;
 }
 
 export interface ProcessStep {

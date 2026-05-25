@@ -23,7 +23,7 @@ const navItems = [
   { href: "/admin/blog", label: "Blog Posts", icon: FileText },
   { href: "/admin/testimonials", label: "Testimonials", icon: Star },
   { href: "/admin/messages", label: "Messages", icon: Mail },
-  { href: "/admin/media", label: "Media Library", icon: ImageIcon },
+  { href: "/admin/media", label: "About Team", icon: ImageIcon },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

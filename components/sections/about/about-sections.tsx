@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { fadeUp, slideInLeft, slideInRight, defaultViewport } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
 import { milestones } from "@/data/content";
+import type { PublicTeamMember } from "@/lib/services/public-content";
 
 export function AboutHeroSection() {
   return (
@@ -189,7 +190,15 @@ export function MilestonesSection() {
   );
 }
 
-export function TeamPlaceholderSection() {
+type TeamSectionProps = {
+  members: PublicTeamMember[];
+};
+
+export function TeamSection({ members }: TeamSectionProps) {
+  if (members.length === 0) {
+    return null;
+  }
+
   return (
     <section className="section-padding bg-tijara-charcoal/50">
       <div className="container-wide text-center">
@@ -207,16 +216,32 @@ export function TeamPlaceholderSection() {
           </h2>
           <p className="text-tijara-gray max-w-2xl mx-auto mb-10">
             Our team brings together strategists, marketers, and operators with
-            deep industry experience. Team profiles coming soon.
+            deep industry experience.
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-2xl glass-card flex items-center justify-center"
+          <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-6">
+            {members.map((member, i) => (
+              <motion.div
+                key={member.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={defaultViewport}
+                transition={{ delay: i * 0.08 }}
+                className="w-[calc(50%-12px)] min-w-[140px] max-w-[200px] shrink-0 text-center sm:w-[200px]"
               >
-                <span className="text-tijara-gray text-sm">Coming Soon</span>
-              </div>
+                <div className="relative aspect-square overflow-hidden rounded-2xl glass-card">
+                  <Image
+                    src={member.imageUrl}
+                    alt={member.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </div>
+                <p className="mt-3 font-medium text-white text-sm">{member.name}</p>
+                {member.role ? (
+                  <p className="text-tijara-gray text-xs mt-0.5">{member.role}</p>
+                ) : null}
+              </motion.div>
             ))}
           </div>
           <Button asChild className="mt-10">

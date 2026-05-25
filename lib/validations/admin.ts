@@ -42,6 +42,20 @@ export const testimonialSchema = z.object({
   sortOrder: z.number().int().default(0),
 });
 
+export const teamMemberSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().max(100).default(""),
+  role: z.string().max(150).default(""),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+  publicId: z.string().optional().or(z.literal("")),
+  published: z.boolean().default(true),
+  sortOrder: z.number().int().min(0).max(3),
+});
+
+export const teamMembersSaveSchema = z.object({
+  members: z.array(teamMemberSchema).max(4),
+});
+
 export const siteSettingsSchema = z.object({
   companyName: z.string().min(1).max(100),
   tagline: z.string().min(1).max(200),
@@ -64,3 +78,4 @@ export type ServiceFormValues = z.infer<typeof serviceSchema>;
 export type BlogPostFormValues = z.infer<typeof blogPostSchema>;
 export type TestimonialFormValues = z.infer<typeof testimonialSchema>;
 export type SiteSettingsFormValues = z.infer<typeof siteSettingsSchema>;
+export type TeamMemberFormValues = z.infer<typeof teamMemberSchema>;

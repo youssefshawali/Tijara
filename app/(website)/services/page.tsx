@@ -4,6 +4,7 @@ import {
   ServicesDetailSection,
 } from "@/components/sections/services/services-sections";
 import { CtaSection } from "@/components/shared/cta-section";
+import { getPublishedServices } from "@/lib/services/public-content";
 
 export const metadata = createMetadata({
   title: "Services",
@@ -12,11 +13,13 @@ export const metadata = createMetadata({
   path: "/services",
 });
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const services = await getPublishedServices();
+
   return (
     <>
       <ServicesHeroSection />
-      <ServicesDetailSection />
+      <ServicesDetailSection services={services} />
       <CtaSection />
     </>
   );

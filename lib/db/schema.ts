@@ -95,6 +95,22 @@ export const siteSettings = pgTable("site_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+import { TEAM_SLOT_COUNT } from "@/lib/team";
+
+export { TEAM_SLOT_COUNT };
+
+export const teamMembers = pgTable("team_members", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().default(""),
+  role: text("role").notNull().default(""),
+  imageUrl: text("image_url"),
+  publicId: text("public_id"),
+  published: boolean("published").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const mediaFiles = pgTable("media_files", {
   id: text("id").primaryKey(),
   filename: text("filename").notNull(),
@@ -115,3 +131,4 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type MediaFile = typeof mediaFiles.$inferSelect;
+export type TeamMember = typeof teamMembers.$inferSelect;

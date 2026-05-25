@@ -1,12 +1,37 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { services, testimonials, siteSettings } from "@/lib/db/schema";
-import { services as staticServices } from "@/data/services";
+import { services, testimonials, siteSettings, teamMembers } from "@/lib/db/schema";
 import { siteConfig, type SiteConfig } from "@/lib/site-config";
+import type { Service } from "@/types";
 
 const SETTINGS_ID = "default";
 
-export async function getPublishedServices() {
+function mapPublishedService(row: {
+  slug: string;
+  title: string;
+  shortDescription: string;
+  description: string;
+  benefits: string[];
+  process: string[];
+  icon: string;
+  imageUrl: string | null;
+}): Service {
+  return {
+    id: row.slug,
+    title: row.title,
+    shortDescription: row.shortDescription,
+    description: row.description,
+    benefits: row.benefits,
+    process: row.process,
+    icon: row.icon,
+    imageUrl: row.imageUrl ?? undefined,
+  };
+}
+
+export async function getPublishedServices(): Promise<Service[]> {
+  noStore();
+
   try {
     const rows = await db
       .select()
@@ -14,24 +39,55 @@ export async function getPublishedServices() {
       .where(eq(services.published, true))
       .orderBy(asc(services.sortOrder));
 
-    if (rows.length === 0) return staticServices;
-
-    return rows.map((s) => ({
-      id: s.slug,
-      title: s.title,
-      shortDescription: s.shortDescription,
-      description: s.description,
-      benefits: s.benefits,
-      process: s.process,
-      icon: s.icon,
-      imageUrl: s.imageUrl ?? undefined,
-    }));
-  } catch {
-    return staticServices;
+    return rows.map(mapPublishedService);
+  } catch (err) {
+    console.error("[getPublishedServices]", err);
+    return [];
   }
 }
 
-export async function getPublishedTestimonials() {
+export type PublicTestimonial = {
+  id: string;
+  quote: string;
+  author: string;
+  role: string;
+  imageUrl?: string | null;
+  rating: number;
+};
+
+export type PublicTeamMember = {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl: string;
+};
+
+export async function getPublishedTeamMembers(): Promise<PublicTeamMember[]> {
+  noStore();
+
+  try {
+    const rows = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.published, true))
+      .orderBy(asc(teamMembers.sortOrder));
+
+    return rows
+      .filter((m) => m.name.trim() && m.imageUrl)
+      .map((m) => ({
+        id: m.id,
+        name: m.name.trim(),
+        role: m.role.trim(),
+        imageUrl: m.imageUrl!,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getPublishedTestimonials(): Promise<PublicTestimonial[]> {
+  noStore();
+
   try {
     const items = await db
       .select()
@@ -39,9 +95,8 @@ export async function getPublishedTestimonials() {
       .where(eq(testimonials.published, true))
       .orderBy(asc(testimonials.sortOrder));
 
-    if (items.length === 0) return null;
-
     return items.map((t) => ({
+      id: t.id,
       quote: t.quote,
       author: t.clientName,
       role: `${t.position}, ${t.company}`,
@@ -49,11 +104,13 @@ export async function getPublishedTestimonials() {
       rating: t.rating,
     }));
   } catch {
-    return null;
+    return [];
   }
 }
 
 export async function getPublicSiteSettings() {
+  noStore();
+
   try {
     const [settings] = await db
       .select()

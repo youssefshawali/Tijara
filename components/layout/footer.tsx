@@ -3,12 +3,14 @@ import Link from "next/link";
 import { Instagram, Mail, Phone, MapPin } from "lucide-react";
 import { footerLinks } from "@/data/navigation";
 import type { SiteConfig } from "@/lib/site-config";
+import type { NavLink } from "@/types";
 
 type FooterProps = {
   config: SiteConfig;
+  serviceLinks: NavLink[];
 };
 
-export function Footer({ config }: FooterProps) {
+export function Footer({ config, serviceLinks }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -63,16 +65,27 @@ export function Footer({ config }: FooterProps) {
               Services
             </h3>
             <ul className="space-y-3">
-              {footerLinks.services.map((link) => (
-                <li key={link.href}>
+              {serviceLinks.length > 0 ? (
+                serviceLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-tijara-gray hover:text-tijara-green-light transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li>
                   <Link
-                    href={link.href}
+                    href="/services"
                     className="text-sm text-tijara-gray hover:text-tijara-green-light transition-colors"
                   >
-                    {link.label}
+                    View all services
                   </Link>
                 </li>
-              ))}
+              )}
             </ul>
           </div>
 

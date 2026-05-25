@@ -4,9 +4,10 @@ import {
   MissionVisionSection,
   StorySection,
   MilestonesSection,
-  TeamPlaceholderSection,
+  TeamSection,
 } from "@/components/sections/about/about-sections";
 import { CtaSection } from "@/components/shared/cta-section";
+import { getPublishedTeamMembers } from "@/lib/services/public-content";
 
 export const metadata = createMetadata({
   title: "About",
@@ -16,14 +17,16 @@ export const metadata = createMetadata({
   image: "/pictures/about-conference.jpeg",
 });
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const team = await getPublishedTeamMembers();
+
   return (
     <>
       <AboutHeroSection />
       <MissionVisionSection />
       <StorySection />
       <MilestonesSection />
-      <TeamPlaceholderSection />
+      <TeamSection members={team} />
       <CtaSection />
     </>
   );

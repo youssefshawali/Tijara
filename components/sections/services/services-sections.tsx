@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { fadeUp, defaultViewport } from "@/lib/animations";
 import { Button } from "@/components/ui/button";
-import { services } from "@/data/services";
+import type { Service } from "@/types";
 
 const iconMap: Record<string, LucideIcon> = {
   TrendingUp,
@@ -63,7 +63,21 @@ export function ServicesHeroSection() {
   );
 }
 
-export function ServicesDetailSection() {
+type ServicesDetailSectionProps = {
+  services: Service[];
+};
+
+export function ServicesDetailSection({ services }: ServicesDetailSectionProps) {
+  if (services.length === 0) {
+    return (
+      <section className="section-padding">
+        <div className="container-wide text-center text-tijara-gray">
+          <p>No services are published yet. Check back soon.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="section-padding">
       <div className="container-wide space-y-24">

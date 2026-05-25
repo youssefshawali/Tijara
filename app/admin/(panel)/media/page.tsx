@@ -3,63 +3,107 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Copy, Loader2, Trash2, Upload } from "lucide-react";
+import { Loader2, Save, Upload, User } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+const TEAM_SLOT_COUNT = 4;
 
-interface MediaFile {
-  _id: string;
-  filename: string;
-  url: string;
-  format: string;
-  bytes: number;
-  width?: number;
-  height?: number;
-  createdAt: string;
+type TeamSlot = {
+  id?: string;
+  name: string;
+  role: string;
+  imageUrl: string;
+  publicId: string;
+  published: boolean;
+  sortOrder: number;
+};
+
+function emptySlot(sortOrder: number): TeamSlot {
+  return {
+    name: "",
+    role: "",
+    imageUrl: "",
+    publicId: "",
+    published: true,
+    sortOrder,
+  };
 }
 
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function mergeSlotsFromApi(
+  rows: Array<{
+    _id: string;
+    name: string;
+    role: string;
+    imageUrl?: string | null;
+    publicId?: string | null;
+    published: boolean;
+    sortOrder: number;
+  }>
+): TeamSlot[] {
+  const slots = Array.from({ length: TEAM_SLOT_COUNT }, (_, i) => emptySlot(i));
+  for (const row of rows) {
+    if (row.sortOrder >= 0 && row.sortOrder < TEAM_SLOT_COUNT) {
+      slots[row.sortOrder] = {
+        id: row._id,
+        name: row.name ?? "",
+        role: row.role ?? "",
+        imageUrl: row.imageUrl ?? "",
+        publicId: row.publicId ?? "",
+        published: row.published,
+        sortOrder: row.sortOrder,
+      };
+    }
+  }
+  return slots;
 }
 
 export default function MediaPage() {
-  const [files, setFiles] = useState<MediaFile[]>([]);
+  const [slots, setSlots] = useState<TeamSlot[]>(() =>
+    Array.from({ length: TEAM_SLOT_COUNT }, (_, i) => emptySlot(i))
+  );
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  async function loadMedia() {
+  async function loadTeam() {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/media");
+      const res = await fetch("/api/admin/team");
       if (!res.ok) throw new Error("Failed");
       const json = await res.json();
-      setFiles(json.data ?? []);
+      setSlots(mergeSlotsFromApi(json.data ?? []));
     } catch {
-      toast.error("Failed to load media");
+      toast.error("Failed to load team");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    void loadMedia();
+    void loadTeam();
   }, []);
 
-  async function handleUpload(fileList: FileList | null) {
+  function updateSlot(index: number, patch: Partial<TeamSlot>) {
+    setSlots((prev) =>
+      prev.map((slot, i) => (i === index ? { ...slot, ...patch } : slot))
+    );
+  }
+
+  async function handleUpload(index: number, fileList: FileList | null) {
     const file = fileList?.[0];
     if (!file) return;
 
-    setUploading(true);
+    setUploadingSlot(index);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("folder", "tijara");
+      formData.append("folder", "tijara/team");
 
       const res = await fetch("/api/admin/media/upload", {
         method: "POST",
@@ -69,144 +113,155 @@ export default function MediaPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Upload failed");
 
-      toast.success("File uploaded");
-      void loadMedia();
+      updateSlot(index, {
+        imageUrl: json.data.url,
+        publicId: json.data.publicId ?? "",
+      });
+      toast.success(`Photo uploaded for slot ${index + 1}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      setUploadingSlot(null);
+      const input = inputRefs.current[index];
+      if (input) input.value = "";
     }
   }
 
-  async function deleteFile(id: string) {
-    if (!confirm("Delete this file permanently?")) return;
+  async function saveTeam() {
+    setSaving(true);
     try {
-      const res = await fetch(`/api/admin/media?id=${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-      toast.success("File deleted");
-      void loadMedia();
-    } catch {
-      toast.error("Failed to delete file");
-    }
-  }
+      const res = await fetch("/api/admin/team", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members: slots }),
+      });
 
-  async function copyUrl(url: string) {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("URL copied to clipboard");
-    } catch {
-      toast.error("Failed to copy URL");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Save failed");
+
+      setSlots(mergeSlotsFromApi(json.data ?? []));
+      toast.success("About page team updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <PageHeader
-        title="Media Library"
-        description="Upload and manage images for your website"
+        title="About Team"
+        description="Manage the four team member slots shown on the About page"
         action={
-          <Button onClick={() => inputRef.current?.click()} disabled={uploading}>
-            {uploading ? (
+          <Button onClick={() => void saveTeam()} disabled={saving || loading}>
+            {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Upload className="mr-2 h-4 w-4" />
+              <Save className="mr-2 h-4 w-4" />
             )}
-            Upload Image
+            Save team
           </Button>
         }
       />
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => void handleUpload(e.target.files)}
-      />
-
-      <motion.button
-        type="button"
-        whileHover={{ scale: 1.005 }}
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 px-6 py-12 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/40"
-      >
-        {uploading ? (
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        ) : (
-          <Upload className="h-8 w-8 text-primary" />
-        )}
-        <p className="text-sm font-medium">
-          {uploading ? "Uploading..." : "Drop images here or click to upload"}
-        </p>
-        <p className="text-xs">JPEG, PNG, WebP, GIF, SVG — max 5 MB</p>
-      </motion.button>
+      <p className="text-sm text-muted-foreground">
+        Upload a photo for each slot, add name and role, then click Save team. Only
+        published members with a photo and name appear on{" "}
+        <span className="text-foreground">/about</span>.
+      </p>
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-xl" />
+        <div className="grid gap-6 sm:grid-cols-2">
+          {Array.from({ length: TEAM_SLOT_COUNT }).map((_, i) => (
+            <Skeleton key={i} className="h-80 rounded-xl" />
           ))}
         </div>
-      ) : files.length === 0 ? (
-        <Card className="border-border/60">
-          <CardContent className="py-16 text-center text-muted-foreground">
-            No media files yet. Upload your first image above.
-          </CardContent>
-        </Card>
       ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        >
-          {files.map((file, index) => (
-            <motion.div
-              key={file._id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.03 }}
-            >
-              <Card className="group overflow-hidden border-border/60 shadow-sm transition-shadow hover:shadow-md">
-                <div className="relative aspect-square bg-muted">
-                  <Image
-                    src={file.url}
-                    alt={file.filename}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-9 w-9"
-                      onClick={() => void copyUrl(file.url)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-9 w-9 text-destructive"
-                      onClick={() => void deleteFile(file._id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+        <div className="grid gap-6 sm:grid-cols-2">
+          {slots.map((slot, index) => (
+            <Card key={index} className="border-border/60">
+              <CardContent className="space-y-4 p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">
+                    Slot {index + 1}
+                  </span>
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={slot.published}
+                      onChange={(e) =>
+                        updateSlot(index, { published: e.target.checked })
+                      }
+                      className="rounded border-border"
+                    />
+                    Show on site
+                  </label>
+                </div>
+
+                <input
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void handleUpload(index, e.target.files)}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => inputRefs.current[index]?.click()}
+                  disabled={uploadingSlot === index}
+                  className="relative mx-auto flex aspect-square w-full max-w-[200px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50"
+                >
+                  {uploadingSlot === index ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  ) : slot.imageUrl ? (
+                    <Image
+                      src={slot.imageUrl}
+                      alt={slot.name || `Team member ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <User className="h-10 w-10 opacity-50" />
+                      <span className="text-xs">Upload photo</span>
+                    </div>
+                  )}
+                  {slot.imageUrl && uploadingSlot !== index && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity hover:opacity-100">
+                      <Upload className="h-6 w-6 text-white" />
+                    </span>
+                  )}
+                </button>
+
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`name-${index}`}>Name</Label>
+                    <Input
+                      id={`name-${index}`}
+                      value={slot.name}
+                      onChange={(e) => updateSlot(index, { name: e.target.value })}
+                      placeholder="e.g. Sarah Ahmed"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`role-${index}`}>Role</Label>
+                    <Input
+                      id={`role-${index}`}
+                      value={slot.role}
+                      onChange={(e) => updateSlot(index, { role: e.target.value })}
+                      placeholder="e.g. Managing Partner"
+                    />
                   </div>
                 </div>
-                <CardContent className="space-y-1 p-3">
-                  <p className="truncate text-sm font-medium text-foreground">{file.filename}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatBytes(file.bytes)} · {file.format.toUpperCase()}
-                    {file.width && file.height && ` · ${file.width}×${file.height}`}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
+              </CardContent>
+            </Card>
           ))}
-        </motion.div>
+        </div>
       )}
     </motion.div>
   );

@@ -13,10 +13,4 @@ export const footerLinks = {
     { href: "/services", label: "Services" },
     { href: "/contact", label: "Contact" },
   ],
-  services: [
-    { href: "/services#business-development", label: "Business Development" },
-    { href: "/services#growth-strategy", label: "Growth Strategy" },
-    { href: "/services#branding", label: "Branding" },
-    { href: "/services#marketing", label: "Marketing" },
-  ],
 };

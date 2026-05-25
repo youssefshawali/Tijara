@@ -3,29 +3,17 @@
 import { motion } from "framer-motion";
 import { fadeUp, defaultViewport } from "@/lib/animations";
 import { SectionHeader } from "@/components/shared/section-header";
+import type { PublicTestimonial } from "@/lib/services/public-content";
 
-const testimonials = [
-  {
-    quote:
-      "TIJARA transformed our go-to-market strategy. Within six months, we saw a 40% increase in qualified leads and clearer brand positioning.",
-    author: "Sarah M.",
-    role: "CEO, Tech Startup",
-  },
-  {
-    quote:
-      "Their operational consulting helped us scale from 10 to 50 employees without losing efficiency. Truly a strategic partner.",
-    author: "Ahmed K.",
-    role: "Founder, E-commerce Brand",
-  },
-  {
-    quote:
-      "The branding work TIJARA delivered elevated our entire market presence. We now command premium pricing with confidence.",
-    author: "Layla R.",
-    role: "Director, Professional Services",
-  },
-];
+type TestimonialsSectionProps = {
+  testimonials: PublicTestimonial[];
+};
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
+  if (testimonials.length === 0) {
+    return null;
+  }
+
   return (
     <section className="section-padding">
       <div className="container-wide">
@@ -38,7 +26,7 @@ export function TestimonialsSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {testimonials.map((item, i) => (
             <motion.blockquote
-              key={item.author}
+              key={item.id}
               initial="hidden"
               whileInView="visible"
               viewport={defaultViewport}
