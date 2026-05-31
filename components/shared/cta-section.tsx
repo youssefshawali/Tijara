@@ -19,7 +19,7 @@ export function CtaSection({
   subheadline = "Let's build your next success.",
   buttonText = "Book Consultation",
   buttonHref = "/contact",
-  backgroundImage = "/pictures/cta-reception.jpeg",
+  backgroundImage = "/pictures/cta-reception.png",
 }: CtaSectionProps) {
   return (
     <section className="relative section-padding overflow-hidden">

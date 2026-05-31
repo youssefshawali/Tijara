@@ -12,7 +12,7 @@ export function createMetadata({
   title,
   description = siteConfig.description,
   path = "",
-  image = "/pictures/hero-office.jpeg",
+  image = "/pictures/hero-office.png",
 }: PageMetadataOptions = {}): Metadata {
   const pageTitle = title
     ? `${title} | ${siteConfig.name}`

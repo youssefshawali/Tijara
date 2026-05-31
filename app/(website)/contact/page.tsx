@@ -11,7 +11,7 @@ export const metadata = createMetadata({
   description:
     "Get in touch with TIJARA. Book a consultation for business development, strategy, and growth consulting.",
   path: "/contact",
-  image: "/pictures/cta-reception.jpeg",
+  image: "/pictures/cta-reception.png",
 });
 
 export default async function ContactPage() {

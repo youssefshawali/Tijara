@@ -14,7 +14,7 @@ export const metadata = createMetadata({
   description:
     "Learn about TIJARA's mission, vision, and growth philosophy. Premium business development partner for ambitious companies.",
   path: "/about",
-  image: "/pictures/about-conference.jpeg",
+  image: "/pictures/about-conference.png",
 });
 
 export default async function AboutPage() {

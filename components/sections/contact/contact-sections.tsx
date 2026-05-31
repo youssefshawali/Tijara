@@ -27,7 +27,7 @@ export function ContactHeroSection() {
   return (
     <section className="relative min-h-[40vh] flex items-center overflow-hidden">
       <Image
-        src="/pictures/cta-reception.jpeg"
+        src="/pictures/cta-reception.png"
         alt="Contact TIJARA"
         fill
         className="object-cover"

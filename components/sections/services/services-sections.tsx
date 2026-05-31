@@ -34,7 +34,7 @@ export function ServicesHeroSection() {
   return (
     <section className="relative min-h-[50vh] flex items-center overflow-hidden">
       <Image
-        src="/pictures/hero-office.jpeg"
+        src="/pictures/hero-office.png"
         alt="TIJARA services"
         fill
         className="object-cover"

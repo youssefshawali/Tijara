@@ -23,7 +23,7 @@ export function HeroSection() {
     >
       <motion.div className="absolute inset-0" style={{ y }}>
         <Image
-          src="/pictures/hero-office.jpeg"
+          src="/pictures/hero-office.png"
           alt="Modern TIJARA office workspace"
           fill
           priority

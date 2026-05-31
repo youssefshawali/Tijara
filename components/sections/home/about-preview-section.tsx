@@ -50,7 +50,7 @@ export function AboutPreviewSection() {
               className="relative aspect-[4/3] rounded-2xl overflow-hidden"
             >
               <Image
-                src="/pictures/about-conference.jpeg"
+                src="/pictures/about-conference.png"
                 alt="TIJARA strategy conference room"
                 fill
                 className="object-cover"

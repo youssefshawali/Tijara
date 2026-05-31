@@ -12,7 +12,7 @@ export function AboutHeroSection() {
   return (
     <section className="relative min-h-[60vh] flex items-center overflow-hidden">
       <Image
-        src="/pictures/about-conference.jpeg"
+        src="/pictures/about-conference.png"
         alt="TIJARA conference room"
         fill
         className="object-cover"
@@ -127,7 +127,7 @@ export function StorySection() {
 
           <motion.div variants={slideInRight} className="relative aspect-[4/3] rounded-2xl overflow-hidden">
             <Image
-              src="/pictures/hero-office.jpeg"
+              src="/pictures/hero-office.png"
               alt="TIJARA office"
               fill
               className="object-cover"
