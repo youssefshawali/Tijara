@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx scripts/seed.ts",
-    "db:push": "tsx scripts/push-schema.ts"
+    "db:push": "tsx scripts/push-schema.ts",
+    "db:import": "tsx scripts/import-local-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
