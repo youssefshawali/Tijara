@@ -51,6 +51,9 @@ Copy `.env.example` to `.env.local` and update:
 | `AUTH_URL` | `http://localhost:3000` in dev |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Initial admin login (used by seed) |
 | `CLOUDINARY_*` | Optional — for media uploads |
+| `RESEND_API_KEY` | Contact form email — see [docs/email-resend-setup.md](docs/email-resend-setup.md) |
+| `EMAIL_FROM` | Sender address on verified domain, e.g. `TIJARA <info@tijara.dev>` |
+| `CONTACT_NOTIFICATION_EMAIL` | Inbox that receives form alerts |
 
 ### 4. Seed the database
 
@@ -99,4 +102,12 @@ npm run dev
 
 ## Deployment
 
-Set `DATABASE_URL`, `AUTH_SECRET`, and other env vars on your host, run `npm run db:push`, then `npm run seed` once.
+Set env vars on your host (Vercel, VPS, etc.), then redeploy:
+
+- `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL` (e.g. `https://tijara.dev`)
+- `NEXT_PUBLIC_SITE_URL`
+- `RESEND_API_KEY`, `EMAIL_FROM`, `CONTACT_NOTIFICATION_EMAIL` for contact emails
+
+Run `npm run db:push`, then `npm run seed` once on the production database.
+
+Full email setup (Resend + GoDaddy DNS): [docs/email-resend-setup.md](docs/email-resend-setup.md).

@@ -1,4 +1,17 @@
+import { Resend } from "resend";
 import nodemailer from "nodemailer";
+
+function getDefaultFrom() {
+  return (
+    process.env.EMAIL_FROM ??
+    process.env.SMTP_FROM ??
+    "TIJARA <notifications@tijara.dev>"
+  );
+}
+
+export function isResendConfigured() {
+  return Boolean(process.env.RESEND_API_KEY);
+}
 
 export function isSmtpConfigured() {
   return Boolean(
@@ -8,7 +21,11 @@ export function isSmtpConfigured() {
   );
 }
 
-function createTransport() {
+export function isEmailConfigured() {
+  return isResendConfigured() || isSmtpConfigured();
+}
+
+function createSmtpTransport() {
   const port = Number(process.env.SMTP_PORT ?? 587);
   const secure =
     process.env.SMTP_SECURE === "true" || port === 465;
@@ -24,26 +41,16 @@ function createTransport() {
   });
 }
 
-export async function sendEmail(options: {
+async function sendViaResend(options: {
   to: string;
   subject: string;
   text: string;
   html: string;
   replyTo?: string;
 }) {
-  if (!isSmtpConfigured()) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Email] SMTP not configured — skipping send");
-    }
-    return false;
-  }
-
-  const from =
-    process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@tijara.dev";
-
-  const transport = createTransport();
-  await transport.sendMail({
-    from,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({
+    from: getDefaultFrom(),
     to: options.to,
     subject: options.subject,
     text: options.text,
@@ -51,5 +58,48 @@ export async function sendEmail(options: {
     replyTo: options.replyTo,
   });
 
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function sendViaSmtp(options: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+}) {
+  const transport = createSmtpTransport();
+  await transport.sendMail({
+    from: getDefaultFrom(),
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html,
+    replyTo: options.replyTo,
+  });
+}
+
+export async function sendEmail(options: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+}) {
+  if (!isEmailConfigured()) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Email] No provider configured (set RESEND_API_KEY or SMTP)");
+    }
+    return false;
+  }
+
+  if (isResendConfigured()) {
+    await sendViaResend(options);
+    return true;
+  }
+
+  await sendViaSmtp(options);
   return true;
 }
