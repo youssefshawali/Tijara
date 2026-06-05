@@ -10,13 +10,23 @@ import { navLinks } from "@/data/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const HERO_LOGO_SCROLL_THRESHOLD = 380;
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const isHome = pathname === "/";
+  const showNavLogo = !isHome || pastHero || mobileOpen;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 50);
+      setPastHero(y > HERO_LOGO_SCROLL_THRESHOLD);
+    };
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -43,9 +53,27 @@ export function Navbar() {
         )}
       >
         <nav className="container-wide flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="relative z-50 flex items-center gap-2">
-            <TijaraLogo className="h-8 md:h-10" priority />
-          </Link>
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: showNavLogo ? 1 : 0,
+              x: showNavLogo ? 0 : -12,
+            }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className={cn(
+              "relative z-50 flex shrink-0 items-center",
+              !showNavLogo && "pointer-events-none"
+            )}
+            aria-hidden={!showNavLogo}
+          >
+            <Link
+              href="/"
+              className="flex items-center gap-2"
+              tabIndex={showNavLogo ? 0 : -1}
+            >
+              <TijaraLogo className="h-8 md:h-10" priority />
+            </Link>
+          </motion.div>
 
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
