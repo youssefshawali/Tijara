@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Instagram, MessageCircle } from "lucide-react";
+import { Mail, MapPin, Instagram, MessageCircle, Phone } from "lucide-react";
+import { LinkedInIcon, TikTokIcon } from "@/components/shared/social-icons";
 import { fadeUp, slideInLeft, slideInRight, defaultViewport } from "@/lib/animations";
 import { contactFormSchema, type ContactFormValues } from "@/lib/validations/contact";
 import { submitContactForm } from "@/lib/services/contact.service";
@@ -128,22 +129,24 @@ export function ContactFormSection({ contactInfo }: { contactInfo: PublicContact
                     </div>
                   </a>
                 </li>
-                <li>
-                  <a
-                    href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
-                    className="flex items-center gap-4 text-tijara-gray hover:text-tijara-green-light transition-colors group"
-                  >
-                    <motion.div className="w-10 h-10 rounded-lg bg-tijara-green/10 flex items-center justify-center group-hover:bg-tijara-green/20 transition-colors">
-                      <Phone className="w-5 h-5 text-tijara-green" />
-                    </motion.div>
-                    <div>
-                      <span className="block text-xs text-tijara-gray uppercase tracking-wider">
-                        Phone
-                      </span>
-                      <span className="text-sm text-white">{contactInfo.phone}</span>
-                    </div>
-                  </a>
-                </li>
+                {contactInfo.phone.trim() ? (
+                  <li>
+                    <a
+                      href={`tel:${contactInfo.phone.replace(/\s/g, "")}`}
+                      className="flex items-center gap-4 text-tijara-gray hover:text-tijara-green-light transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-tijara-green/10 flex items-center justify-center group-hover:bg-tijara-green/20 transition-colors">
+                        <Phone className="w-5 h-5 text-tijara-green" />
+                      </div>
+                      <div>
+                        <span className="block text-xs text-tijara-gray uppercase tracking-wider">
+                          Phone
+                        </span>
+                        <span className="text-sm text-white">{contactInfo.phone}</span>
+                      </div>
+                    </a>
+                  </li>
+                ) : null}
                 <li className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-tijara-green/10 flex items-center justify-center">
                     <MapPin className="w-5 h-5 text-tijara-green" />
@@ -158,16 +161,18 @@ export function ContactFormSection({ contactInfo }: { contactInfo: PublicContact
               </ul>
             </div>
 
-            <div className="flex gap-4">
-              <a
-                href={contactInfo.whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors text-sm font-medium"
-              >
-                <MessageCircle className="w-5 h-5" />
-                WhatsApp
-              </a>
+            <div className="flex flex-wrap gap-4">
+              {contactInfo.whatsapp.trim() ? (
+                <a
+                  href={contactInfo.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors text-sm font-medium"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  WhatsApp
+                </a>
+              ) : null}
               <a
                 href={contactInfo.instagram}
                 target="_blank"
@@ -177,6 +182,28 @@ export function ContactFormSection({ contactInfo }: { contactInfo: PublicContact
                 <Instagram className="w-5 h-5" />
                 Instagram
               </a>
+              {contactInfo.tiktok ? (
+                <a
+                  href={contactInfo.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-colors text-sm font-medium"
+                >
+                  <TikTokIcon className="w-5 h-5" />
+                  TikTok
+                </a>
+              ) : null}
+              {contactInfo.linkedin ? (
+                <a
+                  href={contactInfo.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/5 text-white hover:bg-white/10 transition-colors text-sm font-medium"
+                >
+                  <LinkedInIcon className="w-5 h-5" />
+                  LinkedIn
+                </a>
+              ) : null}
             </div>
 
             <div className="rounded-2xl overflow-hidden aspect-video glass-card">

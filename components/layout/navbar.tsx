@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { TijaraLogo } from "@/components/shared/tijara-logo";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -44,14 +44,7 @@ export function Navbar() {
       >
         <nav className="container-wide flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="relative z-50 flex items-center gap-2">
-            <Image
-              src="/pictures/logo.jpeg"
-              alt="TIJARA"
-              width={120}
-              height={40}
-              className="h-8 w-auto md:h-10"
-              priority
-            />
+            <TijaraLogo className="h-8 md:h-10" priority />
           </Link>
 
           <div className="hidden lg:flex items-center gap-8">

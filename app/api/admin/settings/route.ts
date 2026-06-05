@@ -20,6 +20,8 @@ function getDefaultSettings() {
     whatsapp: siteConfig.whatsapp,
     instagram: siteConfig.instagram,
     instagramHandle: siteConfig.instagramHandle,
+    tiktok: siteConfig.tiktok,
+    linkedin: siteConfig.linkedin,
     address: siteConfig.address,
   };
 }
@@ -83,10 +85,12 @@ export async function PUT(request: Request) {
           tagline: data.tagline,
           description: data.description,
           email: data.email,
-          phone: data.phone,
-          whatsapp: data.whatsapp,
+          phone: data.phone || "",
+          whatsapp: data.whatsapp || "",
           instagram: data.instagram,
           instagramHandle: data.instagramHandle,
+          tiktok: data.tiktok || "",
+          linkedin: data.linkedin || "",
           address: data.address,
           logoUrl: data.logoUrl || null,
           seoTitle: data.seoTitle || null,

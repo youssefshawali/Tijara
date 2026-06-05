@@ -43,6 +43,8 @@ export default function SettingsPage() {
           whatsapp: json.data.whatsapp ?? "",
           instagram: json.data.instagram ?? "",
           instagramHandle: json.data.instagramHandle ?? "",
+          tiktok: json.data.tiktok ?? "",
+          linkedin: json.data.linkedin ?? "",
           address: json.data.address ?? "",
           logoUrl: json.data.logoUrl ?? "",
           seoTitle: json.data.seoTitle ?? "",
@@ -153,15 +155,17 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Phone</Label>
+              <Label>Phone (optional)</Label>
               <Input
+                placeholder="Leave empty to hide on the website"
                 className="border-border bg-background text-foreground"
                 {...form.register("phone")}
               />
             </div>
             <div className="space-y-2">
-              <Label>WhatsApp URL</Label>
+              <Label>WhatsApp URL (optional)</Label>
               <Input
+                placeholder="Leave empty to hide on the website"
                 className="border-border bg-background text-foreground"
                 {...form.register("whatsapp")}
               />
@@ -178,6 +182,22 @@ export default function SettingsPage() {
               <Input
                 className="border-border bg-background text-foreground"
                 {...form.register("instagramHandle")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>TikTok URL</Label>
+              <Input
+                placeholder="https://tiktok.com/@yourhandle"
+                className="border-border bg-background text-foreground"
+                {...form.register("tiktok")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>LinkedIn URL</Label>
+              <Input
+                placeholder="https://linkedin.com/company/yourcompany"
+                className="border-border bg-background text-foreground"
+                {...form.register("linkedin")}
               />
             </div>
           </CardContent>

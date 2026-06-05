@@ -27,6 +27,8 @@ export default async function ContactPage() {
           address: config.address,
           whatsapp: config.whatsapp,
           instagram: config.instagram,
+          tiktok: config.tiktok,
+          linkedin: config.linkedin,
         }}
       />
       <NewsletterPlaceholder />

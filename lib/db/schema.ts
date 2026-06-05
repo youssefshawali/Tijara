@@ -86,6 +86,8 @@ export const siteSettings = pgTable("site_settings", {
   whatsapp: text("whatsapp").notNull(),
   instagram: text("instagram").notNull(),
   instagramHandle: text("instagram_handle").notNull(),
+  tiktok: text("tiktok").notNull().default(""),
+  linkedin: text("linkedin").notNull().default(""),
   address: text("address").notNull(),
   logoUrl: text("logo_url"),
   seoTitle: text("seo_title"),

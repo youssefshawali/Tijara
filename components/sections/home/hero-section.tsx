@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { TijaraLogo } from "@/components/shared/tijara-logo";
 import { ChevronDown } from "lucide-react";
 
 export function HeroSection() {
@@ -54,13 +55,10 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="mb-8"
         >
-          <Image
-            src="/pictures/logo.jpeg"
-            alt="TIJARA"
-            width={200}
-            height={70}
-            className="h-12 md:h-16 w-auto mx-auto animate-float"
+          <TijaraLogo
+            className="mx-auto h-12 animate-float md:h-16"
             priority
+            enhanced
           />
         </motion.div>
 

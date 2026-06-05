@@ -10,6 +10,8 @@ export const siteConfig = {
   whatsapp: "https://wa.me/201000000000",
   instagram: "https://instagram.com/Tijaraeg",
   instagramHandle: "@Tijaraeg",
+  tiktok: "",
+  linkedin: "",
   address: "Cairo, Egypt",
   locale: "en_US",
 } as const;
@@ -25,11 +27,13 @@ export type SiteConfig = {
   whatsapp: string;
   instagram: string;
   instagramHandle: string;
+  tiktok: string;
+  linkedin: string;
   address: string;
   locale: string;
 };
 
 export type PublicContactInfo = Pick<
   SiteConfig,
-  "email" | "phone" | "address" | "whatsapp" | "instagram"
+  "email" | "phone" | "address" | "whatsapp" | "instagram" | "tiktok" | "linkedin"
 >;

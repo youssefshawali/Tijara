@@ -61,6 +61,8 @@ async function seed() {
       whatsapp: "https://wa.me/201000000000",
       instagram: "https://instagram.com/Tijaraeg",
       instagramHandle: "@Tijaraeg",
+      tiktok: "",
+      linkedin: "",
       address: "Cairo, Egypt",
       seoTitle: "TIJARA — Business Development & Growth Consulting",
       seoDescription:

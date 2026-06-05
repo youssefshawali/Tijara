@@ -126,6 +126,8 @@ export async function getPublicSiteSettings() {
       whatsapp: settings.whatsapp,
       instagram: settings.instagram,
       instagramHandle: settings.instagramHandle,
+      tiktok: settings.tiktok ?? "",
+      linkedin: settings.linkedin ?? "",
       address: settings.address,
       logoUrl: settings.logoUrl,
       companyName: settings.companyName,
@@ -148,6 +150,8 @@ export async function getMergedSiteConfig(): Promise<SiteConfig> {
     whatsapp: settings.whatsapp,
     instagram: settings.instagram,
     instagramHandle: settings.instagramHandle,
+    tiktok: settings.tiktok ?? siteConfig.tiktok,
+    linkedin: settings.linkedin ?? siteConfig.linkedin,
     address: settings.address,
   };
 }

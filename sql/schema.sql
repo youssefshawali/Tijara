@@ -88,6 +88,8 @@ CREATE TABLE IF NOT EXISTS site_settings (
   whatsapp TEXT NOT NULL,
   instagram TEXT NOT NULL,
   instagram_handle TEXT NOT NULL,
+  tiktok TEXT NOT NULL DEFAULT '',
+  linkedin TEXT NOT NULL DEFAULT '',
   address TEXT NOT NULL,
   logo_url TEXT,
   seo_title TEXT,
@@ -123,3 +125,6 @@ CREATE TABLE IF NOT EXISTS media_files (
   folder TEXT NOT NULL DEFAULT 'tijara',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS tiktok TEXT NOT NULL DEFAULT '';
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS linkedin TEXT NOT NULL DEFAULT '';
